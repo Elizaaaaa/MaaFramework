@@ -12,15 +12,11 @@
 
 namespace json::ext
 {
-
 template <>
 class jsonization<std::filesystem::path>
 {
 public:
-    json::value to_json(const std::filesystem::path& path) const
-    {
-        return MAA_NS::path_to_utf8_string(path);
-    }
+    json::value to_json(const std::filesystem::path& path) const { return MAA_NS::path_to_utf8_string(path); }
 
     bool check_json(const json::value& json) const { return json.is_string(); }
 
@@ -50,15 +46,9 @@ template <>
 class jsonization<cv::Rect>
 {
 public:
-    json::value to_json(const cv::Rect& rect) const
-    {
-        return json::array { rect.x, rect.y, rect.width, rect.height };
-    }
+    json::value to_json(const cv::Rect& rect) const { return json::array { rect.x, rect.y, rect.width, rect.height }; }
 
-    bool check_json(const json::value& json) const
-    {
-        return json.is<std::vector<int>>() && json.as_array().size() == 4;
-    }
+    bool check_json(const json::value& json) const { return json.is<std::vector<int>>() && json.as_array().size() == 4; }
 
     bool from_json(const json::value& json, cv::Rect& rect) const
     {
@@ -67,5 +57,4 @@ public:
         return true;
     }
 };
-
 } // namespace json::ext

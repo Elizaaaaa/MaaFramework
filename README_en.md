@@ -17,7 +17,7 @@ _✨ An automation black-box testing framework based on image recognition ✨_
 <p align="center">
   <img alt="license" src="https://img.shields.io/github/license/MaaXYZ/MaaFramework">
   <img alt="C++" src="https://img.shields.io/badge/C++-20-%2300599C?logo=cplusplus">
-  <img alt="platform" src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-blueviolet">
+  <img alt="platform" src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS%20%7C%20Android-blueviolet">
   <img alt="commit" src="https://img.shields.io/github/commit-activity/m/MaaXYZ/MaaFramework?color=%23ff69b4">
   <img alt="stars" src="https://img.shields.io/github/stars/MaaXYZ/MaaFramework?style=social">
 </p>
@@ -36,61 +36,54 @@ It offers low-code simplicity while maintaining high extensibility. The framewor
 
 ## Get Started
 
+- [Development Approach](docs/en_us/0.1-DevelopmentApproach.md)
 - [Quick Start](docs/en_us/1.1-QuickStarted.md)
 - [Integration](docs/en_us/2.1-Integration.md)
-- [Callback Protocol](docs/en_us/2.2-CallbackProtocol.md)
 - [Pipeline Protocol](docs/en_us/3.1-PipelineProtocol.md)
-- [Custom Task](docs/en_us/2.3-CustomTask.md)
 
 ## Best Practices
 
-- [M9A](https://github.com/MaaXYZ/M9A) 1999 Assistant ![Pipeline](https://img.shields.io/badge/Pipeline-%23454545?logo=codecademy&logoColor=%23FFFFFF&color=%23454545
-)      
+- [M9A](https://github.com/MaaXYZ/M9A) 1999 Assistant ![Pipeline](https://img.shields.io/badge/Pipeline-%23454545?logo=paddypower&logoColor=%23FFFFFF)  
   The 1999 Assistant, based on a brand new architecture. Image technology + simulation control, freeing your hands! Powered by MaaFramework.
-
-- [MAAIP](https://github.com/Arcelibs/MAAIP) idolypride Automation Program Based on MAA Framework Technology  
-  Created by the hottest open-source package on Github, lk99, using MaaFramework.
 
 - [MAABH3](https://github.com/MaaXYZ/MAABH3) Honkai Impact 3 Assistant ![cpp](https://img.shields.io/badge/C%2B%2B-00599C?logo=c%2B%2B&logoColor=white)  
   A one-click tool for the daily tasks of Honkai Impact, based on a brand new architecture. Image technology + simulation control, freeing your hands! Powered by MaaFramework.
 
-- [MAALimbusCompany](https://github.com/hxdnshx/MAALimbusCompany) Limbus Company Assistant ![Pipeline](https://img.shields.io/badge/Pipeline-%23454545?logo=codecademy&logoColor=%23FFFFFF&color=%23454545
-)      
+- [MAALimbusCompany](https://github.com/hxdnshx/MAALimbusCompany) Limbus Company Assistant ![Pipeline](https://img.shields.io/badge/Pipeline-%23454545?logo=paddypower&logoColor=%23FFFFFF)  
   Based on a brand new architecture. Image technology + simulation control, freeing your hands! Powered by MaaFramework.
 
 - [MBA](https://github.com/MaaXYZ/MBA) BA Assistant ![csharp](https://img.shields.io/badge/C%23-239120?logo=csharp&logoColor=white)  
   A BA Assistant based on MAA's new architecture. Image technology + simulation control, no more clicking! Powered by MaaFramework.
 
-- [MAS](https://github.com/MaaXYZ/MaaAssistantSkland) Skland Assistant ![Pipeline](https://img.shields.io/badge/Pipeline-%23454545?logo=codecademy&logoColor=%23FFFFFF&color=%23454545
-)      
+- [MAS](https://github.com/MaaXYZ/MaaAssistantSkland) Skland Assistant ![Pipeline](https://img.shields.io/badge/Pipeline-%23454545?logo=paddypower&logoColor=%23FFFFFF)  
   Based on a brand new architecture. Image technology + simulation control, freeing your hands! Powered by MaaFramework.
 
-- [MRA](https://github.com/MaaXYZ/MaaResonance) Maa Resonance  ![NodeJS](https://camo.githubusercontent.com/ebf7c2fa711fe1e35a62d51214a518b0ff67a89cdf1404dc04c961446fd861b3/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f2d4e6f64656a732d63306562643f7374796c653d666c61742d737175617265266c6f676f3d4e6f64652e6a73
-)    
+- [MRA](https://github.com/MaaXYZ/MaaResonance) Maa Resonance  ![Rust](https://img.shields.io/badge/Rust-000000?logo=rust&logoColor=white)  ![Tauri](https://img.shields.io/badge/Tauri-24C8D8?logo=tauri&logoColor=white)  
   A Conductor Assistant based on MAA's new architecture. Image technology + simulation control, no more clicking! Powered by MaaFramework.
 
-- [MaaHatsuboshiTA](https://github.com/Carpenter-MK1/MaaHatsuboshiTA) Hatsuboshi Teaching Assistant   ![Pipeline](https://img.shields.io/badge/Pipeline-%23454545?logo=codecademy&logoColor=%23FFFFFF&color=%23454545
-)    
+- [MaaHatsuboshiTA](https://github.com/Carpenter-MK1/MaaHatsuboshiTA) Hatsuboshi Teaching Assistant   ![Pipeline](https://img.shields.io/badge/Pipeline-%23454545?logo=paddypower&logoColor=%23FFFFFF)  
   A Tool For Producers PLaying Gakuen-Idolmaster. Powered by MaaFramework.
 
-- [MCCA](https://github.com/MaaXYZ/MCCA) CrossCore Assistant ![Pipeline](https://img.shields.io/badge/Pipeline-%23454545?logo=codecademy&logoColor=%23FFFFFF&color=%23454545
-)      
+- [MCCA](https://github.com/MaaXYZ/MCCA) CrossCore Assistant ![Pipeline](https://img.shields.io/badge/Pipeline-%23454545?logo=paddypower&logoColor=%23FFFFFF)  
   The CrossCore Assistant, based on a brand new architecture. Image technology + simulation control, freeing your hands! Powered by MaaFramework.
 
-- [MSBA](https://github.com/overflow65537/MAA_SnowBreak) Snow break Assistant !  ![Pipeline](https://img.shields.io/badge/Pipeline-%23454545?logo=codecademy&logoColor=%23FFFFFF&color=%23454545
-)    
+- [MSBA](https://github.com/overflow65537/MAA_SnowBreak) Snow break Assistant !  ![Pipeline](https://img.shields.io/badge/Pipeline-%23454545?logo=paddypower&logoColor=%23FFFFFF)  
   The Snow break Assistant, based on a brand new architecture. Image technology + simulation control, freeing your hands! Powered by MaaFramework.
 
-- [MaaAeonFantasy](https://github.com/Andl-Liu/MaaAeonFantasy) Aeon Fantasy Assistant !  ![Pipeline](https://img.shields.io/badge/Pipeline-%23454545?logo=codecademy&logoColor=%23FFFFFF&color=%23454545
-)    
+- [MaaAeonFantasy](https://github.com/Andl-Liu/MaaAeonFantasy) Aeon Fantasy Assistant !  ![Pipeline](https://img.shields.io/badge/Pipeline-%23454545?logo=paddypower&logoColor=%23FFFFFF)  
   The Aeon Fantasy Assistant, based on a brand new architecture. Image technology + simulation control, let your hands do what they should do! Powered by MaaFramework.
 
-- [maa-whmx](https://github.com/MAWHA/maa-whmx) Wuhua Mixin Assistant ![cpp](https://img.shields.io/badge/C%2B%2B-00599C?logo=c%2B%2B&logoColor=white) ![qt](https://img.shields.io/badge/Qt6-41CD52?logo=Qt&logoColor=white)   
+- [maa-whmx](https://github.com/MAWHA/maa-whmx) Wuhua Mixin Assistant ![cpp](https://img.shields.io/badge/C%2B%2B-00599C?logo=c%2B%2B&logoColor=white) ![qt](https://img.shields.io/badge/Qt6-41CD52?logo=Qt&logoColor=white)  
   An assistant for Wuhua Mixin based on a brand new architecture. Image technology + simulation control, freeing your hands! Powered by MaaFramework.
 
-- [MAA-for-Millennium-Tour](https://github.com/Ostwind23/MAA-for-Millennium-Tour) Millennium Tour Assistant ![Pipeline](https://img.shields.io/badge/Pipeline-%23454545?logo=codecademy&logoColor=%23FFFFFF&color=%23454545) ![python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white)   
+- [MAA-for-Millennium-Tour](https://github.com/Ostwind23/MAA-for-Millennium-Tour) Millennium Tour Assistant ![Pipeline](https://img.shields.io/badge/Pipeline-%23454545?logo=codecademy&logoColor=%23FFFFFF&color=%23454545) ![python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white)  
   An assistant for Millennium Tour based on a brand new architecture. Image technology + simulation control, freeing your hands! Powered by MaaFramework.
 
+- [MFAWPF](https://github.com/SweetSmellFox/MFAWPF) MFA Task Manager ![csharp](https://img.shields.io/badge/C%23-239120?logo=csharp&logoColor=white)  
+  A Universal GUI based on MAA's new architecture. Powered by MaaFramework.
+
+- [MET](https://github.com/shanchuan001/MET) Eternal Tree Assistant ![Pipeline](https://img.shields.io/badge/Pipeline-%23454545?logo=paddypower&logoColor=%23FFFFFF)  
+  An assistant for Eternal Tree based on a brand new architecture. Image technology + simulation control, freeing your hands! Powered by MaaFramework.
 
 ## Eco-Building
 
@@ -98,7 +91,7 @@ MAA is planned to be a category of projects rather than just a single piece of s
 
 If your project depends on MaaFramework, we welcome you to name it as MaaXXX, MXA, MAX, and so on. Of course, this is permission, not limitation. You can freely choose other names unrelated to MAA, depending on your own ideas!
 
-We also welcome adding your project to the best practices list above!
+We also welcome you to submit a PR to add your project to the best practices list above!
 
 ## License
 
@@ -109,6 +102,7 @@ We also welcome adding your project to the best practices list above!
 _Please note that you only need to read this chapter if you are ready to develop MaaFramework itself. If you only want to develop applications based on MaaFramework, please refer to [Get Started](#get-started)._
 
 - [How to build](docs/en_us/4.1-BuildGuide.md)
+- [API Design](docs/en_us/4.2-StandardizedInterfaceDesign.md)
 
 ## Acknowledgments
 
@@ -138,8 +132,8 @@ _Please note that you only need to read this chapter if you are ready to develop
   ~~Protocol Buffers - Google's data interchange format~~
 - ~~[grpc](https://github.com/grpc/grpc)~~  
   ~~The C based gRPC (C++, Python, Ruby, Objective-C, PHP, C#)~~
-- [thrift](https://github.com/apache/thrift)  
-  Apache Thrift
+- ~~[thrift](https://github.com/apache/thrift)~~  
+  ~~Apache Thrift~~
 
 ### Developers
 

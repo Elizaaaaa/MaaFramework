@@ -10,18 +10,13 @@ MAA_CTRL_NS_BEGIN
 
 std::minstd_rand ControllerAgent::rand_engine_(std::random_device {}());
 
-ControllerAgent::ControllerAgent(
-    MaaControllerCallback callback,
-    MaaCallbackTransparentArg callback_arg)
-    : notifier(callback, callback_arg)
+ControllerAgent::ControllerAgent(MaaNotificationCallback notify, void* notify_trans_arg)
+    : notifier(notify, notify_trans_arg)
 {
-    LogFunc << VAR_VOIDP(callback) << VAR_VOIDP(callback_arg);
+    LogFunc << VAR_VOIDP(notify) << VAR_VOIDP(notify_trans_arg);
 
-    action_runner_ = std::make_unique<AsyncRunner<Action>>(std::bind(
-        &ControllerAgent::run_action,
-        this,
-        std::placeholders::_1,
-        std::placeholders::_2));
+    action_runner_ =
+        std::make_unique<AsyncRunner<Action>>(std::bind(&ControllerAgent::run_action, this, std::placeholders::_1, std::placeholders::_2));
 }
 
 ControllerAgent::~ControllerAgent()
@@ -33,10 +28,7 @@ ControllerAgent::~ControllerAgent()
     }
 }
 
-bool ControllerAgent::set_option(
-    MaaCtrlOption key,
-    MaaOptionValue value,
-    MaaOptionValueSize val_size)
+bool ControllerAgent::set_option(MaaCtrlOption key, MaaOptionValue value, MaaOptionValueSize val_size)
 {
     LogInfo << VAR(key) << VAR(value) << VAR(val_size);
 
@@ -45,12 +37,6 @@ bool ControllerAgent::set_option(
         return set_image_target_long_side(value, val_size);
     case MaaCtrlOption_ScreenshotTargetShortSide:
         return set_image_target_short_side(value, val_size);
-
-    case MaaCtrlOption_DefaultAppPackageEntry:
-        return set_default_app_package_entry(value, val_size);
-    case MaaCtrlOption_DefaultAppPackage:
-        return set_default_app_package(value, val_size);
-
     case MaaCtrlOption_Recording:
         return set_recording(value, val_size);
 
@@ -88,21 +74,21 @@ MaaCtrlId ControllerAgent::post_press_key(int keycode)
     return id;
 }
 
-MaaCtrlId ControllerAgent::post_input_text(std::string_view text)
+MaaCtrlId ControllerAgent::post_input_text(const std::string& text)
 {
     auto id = post_input_text_impl(text);
     focus_id(id);
     return id;
 }
 
-MaaCtrlId ControllerAgent::post_start_app(std::string_view intent)
+MaaCtrlId ControllerAgent::post_start_app(const std::string& intent)
 {
     auto id = post_start_app_impl(intent);
     focus_id(id);
     return id;
 }
 
-MaaCtrlId ControllerAgent::post_stop_app(std::string_view intent)
+MaaCtrlId ControllerAgent::post_stop_app(const std::string& intent)
 {
     auto id = post_stop_app_impl(intent);
     focus_id(id);
@@ -165,7 +151,7 @@ MaaBool ControllerAgent::connected() const
     return connected_;
 }
 
-cv::Mat ControllerAgent::get_image()
+cv::Mat ControllerAgent::cached_image() const
 {
     return image_;
 }
@@ -202,7 +188,7 @@ bool ControllerAgent::click(const cv::Rect& r)
 bool ControllerAgent::click(const cv::Point& p)
 {
     auto id = post_click_impl(p.x, p.y);
-    return wait(id) == MaaStatus_Success;
+    return wait(id) == MaaStatus_Succeeded;
 }
 
 bool ControllerAgent::swipe(const cv::Rect& r1, const cv::Rect& r2, int duration)
@@ -213,59 +199,41 @@ bool ControllerAgent::swipe(const cv::Rect& r1, const cv::Rect& r2, int duration
 bool ControllerAgent::swipe(const cv::Point& p1, const cv::Point& p2, int duration)
 {
     auto id = post_swipe_impl(p1.x, p1.y, p2.x, p2.y, duration);
-    return wait(id) == MaaStatus_Success;
+    return wait(id) == MaaStatus_Succeeded;
 }
 
 bool ControllerAgent::press_key(int keycode)
 {
     auto id = post_press_key_impl(keycode);
-    return wait(id) == MaaStatus_Success;
+    return wait(id) == MaaStatus_Succeeded;
 }
 
 bool ControllerAgent::input_text(const std::string& text)
 {
     auto id = post_input_text_impl(text);
-    return wait(id) == MaaStatus_Success;
+    return wait(id) == MaaStatus_Succeeded;
 }
 
 cv::Mat ControllerAgent::screencap()
 {
     std::unique_lock<std::mutex> lock(image_mutex_);
     auto id = post_screencap_impl();
-    if (wait(id) != MaaStatus_Success) {
+    if (wait(id) != MaaStatus_Succeeded) {
         return {};
     }
     return image_.clone();
 }
 
-bool ControllerAgent::start_app()
-{
-    if (default_app_package_entry_.empty()) {
-        LogError << "default_app_package_entry_ is empty";
-        return false;
-    }
-    return start_app(default_app_package_entry_);
-}
-
-bool ControllerAgent::stop_app()
-{
-    if (default_app_package_.empty()) {
-        LogError << "default_app_package_ is empty";
-        return false;
-    }
-    return stop_app(default_app_package_);
-}
-
 bool ControllerAgent::start_app(const std::string& package)
 {
     auto id = post({ .type = Action::Type::start_app, .param = AppParam { .package = package } });
-    return wait(id) == MaaStatus_Success;
+    return wait(id) == MaaStatus_Succeeded;
 }
 
 bool ControllerAgent::stop_app(const std::string& package)
 {
     auto id = post({ .type = Action::Type::stop_app, .param = AppParam { .package = package } });
-    return wait(id) == MaaStatus_Success;
+    return wait(id) == MaaStatus_Succeeded;
 }
 
 MaaCtrlId ControllerAgent::post(Action action)
@@ -316,21 +284,21 @@ MaaCtrlId ControllerAgent::post_press_key_impl(int keycode)
     return post({ .type = Action::Type::press_key, .param = std::move(param) });
 }
 
-MaaCtrlId ControllerAgent::post_input_text_impl(std::string_view text)
+MaaCtrlId ControllerAgent::post_input_text_impl(const std::string& text)
 {
-    InputTextParam param { .text = std::string(text) };
+    InputTextParam param { .text = text };
     return post({ .type = Action::Type::input_text, .param = std::move(param) });
 }
 
-MaaCtrlId ControllerAgent::post_start_app_impl(std::string_view intent)
+MaaCtrlId ControllerAgent::post_start_app_impl(const std::string& intent)
 {
-    AppParam param { .package = std::string(intent) };
+    AppParam param { .package = intent };
     return post({ .type = Action::Type::start_app, .param = std::move(param) });
 }
 
-MaaCtrlId ControllerAgent::post_stop_app_impl(std::string_view intent)
+MaaCtrlId ControllerAgent::post_stop_app_impl(const std::string& intent)
 {
-    AppParam param { .package = std::string(intent) };
+    AppParam param { .package = intent };
     return post({ .type = Action::Type::stop_app, .param = std::move(param) });
 }
 
@@ -375,7 +343,6 @@ bool ControllerAgent::handle_connect()
     if (recording()) {
         json::value info {
             { "type", "connect" },
-            { "success", connected_ },
             { "uuid", get_uuid() },
             { "version", MAA_VERSION },
         };
@@ -437,8 +404,7 @@ bool ControllerAgent::handle_touch_down(const TouchParam& param)
 
     if (recording()) {
         json::value info = {
-            { "type", "touch_down" }, { "contact", param.contact },   { "x", param.x },
-            { "y", param.y },         { "pressure", param.pressure },
+            { "type", "touch_down" }, { "contact", param.contact }, { "x", param.x }, { "y", param.y }, { "pressure", param.pressure },
         };
         append_recording(std::move(info), start_time, ret);
     }
@@ -457,8 +423,7 @@ bool ControllerAgent::handle_touch_move(const TouchParam& param)
 
     if (recording()) {
         json::value info = {
-            { "type", "touch_move" }, { "contact", param.contact },   { "x", param.x },
-            { "y", param.y },         { "pressure", param.pressure },
+            { "type", "touch_move" }, { "contact", param.contact }, { "x", param.x }, { "y", param.y }, { "pressure", param.pressure },
         };
         append_recording(std::move(info), start_time, ret);
     }
@@ -604,14 +569,10 @@ void ControllerAgent::init_recording()
 {
     auto recording_dir = GlobalOptionMgr::get_instance().log_dir() / "recording";
     std::filesystem::create_directories(recording_dir);
-    recording_path_ =
-        recording_dir / std::format("maa_recording_{}.txt", format_now_for_filename());
+    recording_path_ = recording_dir / std::format("maa_recording_{}.txt", format_now_for_filename());
 }
 
-void ControllerAgent::append_recording(
-    json::value info,
-    const std::chrono::steady_clock::time_point& start_time,
-    bool success)
+void ControllerAgent::append_recording(json::value info, const std::chrono::steady_clock::time_point& start_time, bool success)
 {
     if (!recording()) {
         return;
@@ -676,12 +637,15 @@ bool ControllerAgent::run_action(typename AsyncRunner<Action>::Id id, Action act
         notify = focus_ids_.erase(id) > 0;
     }
 
-    const json::value details = {
-        { "id", id },
+    std::stringstream ss;
+    ss << action;
+    const json::value cb_detail = {
+        { "ctrl_id", id },
         { "uuid", get_uuid() },
+        { "action", std::move(ss).str() },
     };
     if (notify) {
-        notifier.notify(MaaMsg_Controller_Action_Started, details);
+        notifier.notify(MaaMsg_Controller_Action_Starting, cb_detail);
     }
 
     switch (action.type) {
@@ -730,9 +694,7 @@ bool ControllerAgent::run_action(typename AsyncRunner<Action>::Id id, Action act
     }
 
     if (notify) {
-        notifier.notify(
-            ret ? MaaMsg_Controller_Action_Completed : MaaMsg_Controller_Action_Failed,
-            details);
+        notifier.notify(ret ? MaaMsg_Controller_Action_Succeeded : MaaMsg_Controller_Action_Failed, cb_detail);
     }
 
     return ret;
@@ -741,8 +703,7 @@ bool ControllerAgent::run_action(typename AsyncRunner<Action>::Id id, Action act
 std::pair<int, int> ControllerAgent::preproc_touch_point(int x, int y)
 {
     if (image_target_width_ == 0 || image_target_height_ == 0) {
-        LogWarn << "Invalid image target size" << VAR(image_target_width_)
-                << VAR(image_target_height_);
+        LogWarn << "Invalid image target size" << VAR(image_target_width_) << VAR(image_target_height_);
 
         if (!init_scale_info()) {
             return {};
@@ -766,9 +727,8 @@ bool ControllerAgent::postproc_screenshot(const cv::Mat& raw)
         return false;
     }
 
-    if (raw.cols != image_raw_width_ || raw.rows != image_raw_height_) {
-        LogInfo << "Resolution changed" << VAR(raw.cols) << VAR(raw.rows) << VAR(image_raw_width_)
-                << VAR(image_raw_height_);
+    if (raw.cols != image_raw_width_ || raw.rows != image_raw_height_ || image_target_width_ == 0 || image_target_height_ == 0) {
+        LogInfo << "Resolution changed" << VAR(raw.cols) << VAR(raw.rows) << VAR(image_raw_width_) << VAR(image_raw_height_);
 
         image_raw_width_ = raw.cols;
         image_raw_height_ = raw.rows;
@@ -791,8 +751,8 @@ bool ControllerAgent::calc_target_image_size()
         return false;
     }
 
-    LogDebug << "Re-calc image target size:" << VAR(image_target_long_side_)
-             << VAR(image_target_short_side_) << VAR(image_raw_width_) << VAR(image_raw_height_);
+    LogDebug << "Re-calc image target size:" << VAR(image_target_long_side_) << VAR(image_target_short_side_) << VAR(image_raw_width_)
+             << VAR(image_raw_height_);
 
     double scale = static_cast<double>(image_raw_width_) / image_raw_height_;
 
@@ -823,6 +783,8 @@ bool ControllerAgent::calc_target_image_size()
 
 void ControllerAgent::clear_target_image_size()
 {
+    LogDebug;
+
     image_target_width_ = 0;
     image_target_height_ = 0;
 }
@@ -848,6 +810,8 @@ bool ControllerAgent::init_scale_info()
 
 bool ControllerAgent::set_image_target_long_side(MaaOptionValue value, MaaOptionValueSize val_size)
 {
+    LogDebug;
+
     if (val_size != sizeof(image_target_long_side_)) {
         LogError << "invalid value size: " << val_size;
         return false;
@@ -863,6 +827,8 @@ bool ControllerAgent::set_image_target_long_side(MaaOptionValue value, MaaOption
 
 bool ControllerAgent::set_image_target_short_side(MaaOptionValue value, MaaOptionValueSize val_size)
 {
+    LogDebug;
+
     if (val_size != sizeof(image_target_short_side_)) {
         LogError << "invalid value size: " << val_size;
         return false;
@@ -873,22 +839,6 @@ bool ControllerAgent::set_image_target_short_side(MaaOptionValue value, MaaOptio
     clear_target_image_size();
 
     LogInfo << "image_target_height_ = " << image_target_short_side_;
-    return true;
-}
-
-bool ControllerAgent::set_default_app_package_entry(
-    MaaOptionValue value,
-    MaaOptionValueSize val_size)
-{
-    std::string_view package(reinterpret_cast<char*>(value), val_size);
-    default_app_package_entry_ = package;
-    return true;
-}
-
-bool ControllerAgent::set_default_app_package(MaaOptionValue value, MaaOptionValueSize val_size)
-{
-    std::string_view package(reinterpret_cast<char*>(value), val_size);
-    default_app_package_ = package;
     return true;
 }
 
@@ -915,6 +865,21 @@ std::ostream& operator<<(std::ostream& os, const Action& action)
     case Action::Type::swipe:
         os << "swipe";
         break;
+    case Action::Type::touch_down:
+        os << "touch_down";
+        break;
+    case Action::Type::touch_move:
+        os << "touch_move";
+        break;
+    case Action::Type::touch_up:
+        os << "touch_up";
+        break;
+    case Action::Type::press_key:
+        os << "press_key";
+        break;
+    case Action::Type::input_text:
+        os << "input_text";
+        break;
     case Action::Type::screencap:
         os << "screencap";
         break;
@@ -924,6 +889,7 @@ std::ostream& operator<<(std::ostream& os, const Action& action)
     case Action::Type::stop_app:
         os << "stop_app";
         break;
+
     default:
         os << "unknown action";
         break;

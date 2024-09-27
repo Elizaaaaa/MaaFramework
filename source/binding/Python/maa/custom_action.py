@@ -1,102 +1,92 @@
 import ctypes
+from dataclasses import dataclass
 from abc import ABC, abstractmethod
 
 from .buffer import RectBuffer
-from .context import SyncContext
+from .context import Context
 from .define import *
 
 
 class CustomAction(ABC):
-    _handle: MaaCustomAction
+    _handle: MaaCustomActionCallback
 
     def __init__(self):
-        self._handle = MaaCustomAction(self._c_run_agent, self._c_stop_agent)
+        self._handle = self._c_run_agent
+
+    @dataclass
+    class RunArg:
+        task_detail: TaskDetail
+        current_task_name: str
+        custom_action_name: str
+        custom_action_param: str
+        reco_detail: RecognitionDetail
+        box: Rect
+
+    @dataclass
+    class RunResult:
+        success: bool
 
     @abstractmethod
     def run(
         self,
-        context: SyncContext,
-        task_name: str,
-        custom_param: str,
-        box: Rect,
-        rec_detail: str,
-    ) -> bool:
-        """
-        Run the given action.
-
-        :param context: The context.
-        :param task_name: The name of the task.
-        :param custom_param: The custom action param from pipeline.
-        :param box: The current box.
-        :param rec_detail: The current recognition detail.
-
-        :return: return success or not
-        """
-
-        raise NotImplementedError
-
-    @abstractmethod
-    def stop(
-        self,
-    ) -> None:
-        """
-        Stop the given action.
-
-        :return: None
-        """
-
+        context: Context,
+        argv: RunArg,
+    ) -> Union[RunResult, bool]:
         raise NotImplementedError
 
     @property
-    def c_handle(self) -> ctypes.POINTER(MaaCustomAction):
-        return ctypes.pointer(self._handle)
+    def c_handle(self) -> MaaCustomActionCallback:
+        return self._handle
 
     @property
     def c_arg(self) -> ctypes.c_void_p:
         return ctypes.c_void_p.from_buffer(ctypes.py_object(self))
 
-    @MaaCustomAction.RunFunc
+    @staticmethod
+    @MaaCustomActionCallback
     def _c_run_agent(
-        c_context: MaaSyncContextHandle,
-        c_task_name: MaaStringView,
-        c_custom_param: MaaStringView,
+        c_context: MaaContextHandle,
+        c_task_id: MaaTaskId,
+        c_current_task_name: ctypes.c_char_p,
+        c_custom_action_name: ctypes.c_char_p,
+        c_custom_action_param: ctypes.c_char_p,
+        c_reco_id: MaaRecoId,
         c_box: MaaRectHandle,
-        c_rec_detail: MaaStringView,
-        c_transparent_arg: MaaTransparentArg,
-    ) -> MaaBool:
+        c_transparent_arg: ctypes.c_void_p,
+    ) -> int:
         if not c_transparent_arg:
-            return
+            return int(False)
 
         self: CustomAction = ctypes.cast(
             c_transparent_arg,
             ctypes.py_object,
         ).value
 
-        context = SyncContext(c_context)
-        task_name = c_task_name.decode("utf-8")
-        custom_param = c_custom_param.decode("utf-8")
+        context = Context(c_context)
+        task_detail = context.tasker.get_task_detail(int(c_task_id))
+        reco_detail = context.tasker.get_recognition_detail(int(c_reco_id))
+        if not task_detail or not reco_detail:
+            return int(False)
 
         box = RectBuffer(c_box).get()
-        rec_detail = c_rec_detail.decode("utf-8")
 
-        return self.run(
+        result: Union[CustomAction.RunResult, bool] = self.run(
             context,
-            task_name,
-            custom_param,
-            box,
-            rec_detail,
+            CustomAction.RunArg(
+                task_detail=task_detail,
+                current_task_name=c_current_task_name.decode(),
+                custom_action_name=c_custom_action_name.decode(),
+                custom_action_param=c_custom_action_param.decode(),
+                reco_detail=reco_detail,
+                box=box,
+            ),
         )
 
-    @MaaCustomAction.StopFunc
-    def _c_stop_agent(
-        c_transparent_arg: MaaTransparentArg,
-    ) -> None:
-        if not c_transparent_arg:
-            return
+        if isinstance(result, CustomAction.RunResult):
+            return int(result.success)
 
-        self: CustomAction = ctypes.cast(
-            c_transparent_arg,
-            ctypes.py_object,
-        ).value
+        elif isinstance(result, bool):
+            return int(result)
 
-        return self.stop()
+        else:
+            raise TypeError(f"Invalid return type: {result!r}")

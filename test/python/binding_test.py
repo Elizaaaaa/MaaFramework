@@ -1,7 +1,6 @@
 from pathlib import Path
-from typing import Tuple
+import numpy
 import sys
-import asyncio
 
 if len(sys.argv) < 2:
     print("Usage: python binding_test.py <install_dir>")
@@ -17,23 +16,31 @@ if binding_dir not in sys.path:
 
 from maa.library import Library
 from maa.resource import Resource
-from maa.controller import DbgController
-from maa.instance import Instance
+from maa.controller import DbgController, CustomController
+from maa.tasker import Tasker
 from maa.toolkit import Toolkit
 from maa.custom_action import CustomAction
-from maa.custom_recognizer import CustomRecognizer
-from maa.define import RectType
+from maa.custom_recognition import CustomRecognition
+from maa.define import RectType, MaaDbgControllerTypeEnum, LoggingLevelEnum
+from maa.context import Context
+from maa.notification_handler import NotificationHandler
+
+analyzed: bool = False
+runned: bool = False
 
 
-class MyRecognizer(CustomRecognizer):
+class MyRecognition(CustomRecognition):
+
     def analyze(
-        self, context, image, task_name, custom_param
-    ) -> Tuple[bool, RectType, str]:
+        self,
+        context: Context,
+        argv: CustomRecognition.AnalyzeArg,
+    ) -> CustomRecognition.AnalyzeResult:
         print(
-            f"on MyRecognizer.analyze, image: {image.shape}, task_name: {task_name}, custom_param: {custom_param}"
+            f"on MyRecognition.analyze, context: {context}, image: {argv.image.shape}, task_detail: {argv.task_detail}, reco_name: {argv.custom_recognition_name}, reco_param: {argv.custom_recognition_param}"
         )
         entry = "ColorMatch"
-        param = {
+        ppover = {
             "ColorMatch": {
                 "recognition": "ColorMatch",
                 "lower": [100, 100, 100],
@@ -41,64 +48,96 @@ class MyRecognizer(CustomRecognizer):
                 "action": "Click",
             }
         }
-        context.run_task(entry, param)
-        context.run_action(entry, param, [114, 514, 191, 810], "RunAction Detail")
-        rec_res = context.run_recognition(image, entry, param)
-        print(f"rec_res: {rec_res}")
-        return True, (11, 4, 5, 14), "Hello World!"
+        context.run_pipeline(entry, ppover)
+        context.run_action(entry, [114, 514, 191, 810], "RunAction Detail", ppover)
+        reco_detail = context.run_recognition(entry, argv.image, ppover)
+        print(f"reco_detail: {reco_detail}")
+
+        new_ctx = context.clone()
+        new_ctx.override_pipeline({"TaskA": {}, "TaskB": {}})
+        new_ctx.override_next(argv.current_task_name, ["TaskA", "TaskB"])
+
+        node_detail = new_ctx.tasker.get_latest_node("ColorMatch")
+        print(node_detail)
+
+        task_job = new_ctx.get_task_job()
+        new_task_detail = task_job.get()
+        print(new_task_detail)
+
+        global analyzed
+        analyzed = True
+
+        return CustomRecognition.AnalyzeResult(
+            box=(11, 4, 5, 14), detail="Hello World!"
+        )
 
 
 class MyAction(CustomAction):
-    def run(self, context, task_name, custom_param, box, rec_detail) -> bool:
+    def run(
+        self,
+        context: Context,
+        argv: CustomAction.RunArg,
+    ) -> CustomAction.RunResult:
         print(
-            f"on MyAction.run, task_name: {task_name}, custom_param: {custom_param}, box: {box}, rec_detail: {rec_detail}"
+            f"on MyAction.run, context: {context}, task_detail: {argv.task_detail}, action_name: {argv.custom_action_name}, action_param: {argv.custom_action_param}, box: {argv.box}, reco_detail: {argv.reco_detail}"
         )
-        new_image = context.screencap()
+        controller = context.tasker.controller
+        new_image = controller.post_screencap().wait().get()
         print(f"new_image: {new_image.shape}")
-        context.click(191, 98)
-        context.swipe(100, 200, 300, 400, 100)
-        context.input_text("Hello World!")
-        context.press_key(32)
-        context.touch_down(1, 100, 100, 0)
-        context.touch_move(1, 200, 200, 0)
-        context.touch_up(1)
-        return True
+        controller.post_click(191, 98).wait()
+        controller.post_swipe(100, 200, 300, 400, 100).wait()
+        controller.post_input_text("Hello World!").wait()
+        controller.post_press_key(32).wait()
+        controller.post_touch_down(1, 100, 100, 0).wait()
+        controller.post_touch_move(1, 200, 200, 0).wait()
+        controller.post_touch_up(1).wait()
+        controller.post_start_app("aaa")
+        controller.post_stop_app("bbb")
 
-    def stop(self) -> None:
-        pass
+        cached_image = controller.cached_image
+        connected = controller.connected
+        uuid = controller.uuid
+        controller.set_screenshot_target_long_side(1080)
+        controller.set_screenshot_target_short_side(720)
+
+        global runned
+        runned = True
+
+        return CustomAction.RunResult(success=True)
 
 
-my_rec = MyRecognizer()
-my_act = MyAction()
+def api_test():
+    r1 = Resource()
+    r2 = Resource()
+    r2.post_path("C:/_maafw_testing_/aaabbbccc").wait()
+    t1 = Tasker()
+    t2 = Tasker()
+    t2.post_pipeline("Entry", {}).wait()
 
-
-async def main():
-    version = Library.open(install_dir / "bin")
-    print(f"MaaFw Version: {version}")
-
-    Toolkit.init_option(install_dir / "bin")
-
-    resource = Resource()
-    print(f"resource: {hex(resource._handle)}")
+    resource = Resource(MyNotificationHandler())
+    print(f"resource: {resource}")
 
     dbg_controller = DbgController(
-        install_dir / "test" / "PipelineSmoking" / "Screenshot"
+        install_dir / "test" / "PipelineSmoking" / "Screenshot",
+        install_dir / "test" / "user",
+        MaaDbgControllerTypeEnum.CarouselImage,
+        notification_handler=MyNotificationHandler(),
     )
-    print(f"controller: {hex(dbg_controller._handle)}")
-    await dbg_controller.connect()
+    print(f"controller: {dbg_controller}")
+    dbg_controller.post_connection().wait()
 
-    maa_inst = Instance()
-    maa_inst.bind(resource, dbg_controller)
-    print(f"maa_inst: {hex(maa_inst._handle)}")
+    tasker = Tasker(notification_handler=MyNotificationHandler())
+    tasker.bind(resource, dbg_controller)
+    print(f"tasker: {tasker}")
 
-    if not maa_inst.inited:
-        print("failed to init maa_inst")
+    if not tasker.inited:
+        print("failed to init tasker")
         exit(1)
 
-    maa_inst.register_action("MyAct", my_act)
-    maa_inst.register_recognizer("MyRec", my_rec)
+    resource.register_custom_action("MyAct", MyAction())
+    resource.register_custom_recognition("MyRec", MyRecognition())
 
-    diff = {
+    ppover = {
         "Entry": {"next": "Rec"},
         "Rec": {
             "recognition": "Custom",
@@ -109,29 +148,160 @@ async def main():
         },
     }
 
-    detail = await maa_inst.run_task("Entry", diff)
+    detail = tasker.post_pipeline("Entry", ppover).wait().get()
     if detail:
         print(f"pipeline detail: {detail}")
     else:
         print("pipeline failed")
         raise RuntimeError("pipeline failed")
 
-    detail = await maa_inst.run_recognition("Rec", diff)
-    if detail:
-        print(f"reco detail: {detail}")
-    else:
-        print("reco failed")
-        raise RuntimeError("reco failed")
+    tasker.resource.post_path("C:/_maafw_testing_/aaabbbccc")
+    tasker.clear_cache()
+    inited = tasker.inited
+    running = tasker.running
 
-    detail = await maa_inst.run_action("Rec", diff)
-    if detail:
-        print(f"action detail: {detail}")
-    else:
-        print("action failed")
-        raise RuntimeError("action failed")
+    Tasker.set_save_draw(True)
+    Tasker.set_recording(True)
+    Tasker.set_stdout_level(LoggingLevelEnum.All)
+    Tasker.set_show_hit_draw(True)
+    Tasker.set_log_dir(".")
 
-    print("Done.")
+    devices = Toolkit.find_adb_devices()
+    print(f"devices: {devices}")
+    desktop = Toolkit.find_desktop_windows()
+    print(f"desktop: {desktop}")
+    Toolkit.pi_register_custom_action("MyAct", MyAction())
+    Toolkit.pi_register_custom_recognition("MyRec", MyRecognition())
+    # Toolkit.run_pi_cli("C:/_maafw_testing_/aaabbbccc", ".", True)
+
+    global analyzed, runned
+    if not analyzed or not runned:
+        print("failed to run custom recognition or action")
+        raise RuntimeError("failed to run custom recognition or action")
+
+
+def custom_ctrl_test():
+    print("test_custom_controller")
+
+    controller = MyController(MyNotificationHandler())
+    ret = controller.post_connection().wait().succeeded()
+    uuid = controller.uuid
+    ret &= controller.post_start_app("custom_aaa").wait().succeeded()
+    ret &= controller.post_stop_app("custom_bbb").wait().succeeded()
+    image_job = controller.post_screencap().wait()
+    ret &= image_job.succeeded()
+    print(f"image: {image_job.get().shape}")
+    ret &= controller.post_click(100, 200).wait().succeeded()
+    ret &= controller.post_swipe(100, 200, 300, 400, 200).wait().succeeded()
+    ret &= controller.post_touch_down(1, 100, 100, 0).wait().succeeded()
+    ret &= controller.post_touch_move(1, 200, 200, 0).wait().succeeded()
+    ret &= controller.post_touch_up(1).wait().succeeded()
+    ret &= controller.post_press_key(32).wait().succeeded()
+    ret &= controller.post_input_text("Hello World!").wait().succeeded()
+
+    print(f"controller.count: {controller.count}, ret: {ret}")
+    if controller.count != 11 or not ret:
+        print("failed to run custom controller")
+        raise RuntimeError("failed to run custom controller")
+
+
+class MyNotificationHandler(NotificationHandler):
+    def on_raw_notification(self, msg: str, details: dict):
+        print(
+            f"on MyNotificationHandler.on_raw_notification, msg: {msg}, details: {details}"
+        )
+
+        super().on_raw_notification(msg, details)
+
+
+class MyController(CustomController):
+
+    def __init__(self, notification_handler: NotificationHandler):
+        super().__init__(notification_handler=notification_handler)
+        self.count = 0
+
+    def connect(self) -> bool:
+        print("on MyController.connect")
+        self.count += 1
+        return True
+
+    def request_uuid(self) -> str:
+        print("on MyController.request_uuid")
+        # self.count += 1
+        return "12345678"
+
+    def start_app(self, intent: str) -> bool:
+        print(f"on MyController.start_app, intent: {intent}")
+        self.count += 1
+        return True
+
+    def stop_app(self, intent: str) -> bool:
+        print(f"on MyController.stop_app, intent: {intent}")
+        self.count += 1
+        return True
+
+    def screencap(self) -> numpy.ndarray:
+        print("on MyController.screencap")
+        self.count += 1
+        return numpy.zeros((1080, 1920, 3), dtype=numpy.uint8)
+
+    def click(self, x: int, y: int) -> bool:
+        print(f"on MyController.click, x: {x}, y: {y}")
+        self.count += 1
+        return True
+
+    def swipe(self, x1: int, y1: int, x2: int, y2: int, duration: int) -> bool:
+        print(f"on MyController.swipe, x1: {x1}, y1: {y1}, x2: {x2}, y2: {y2}, duration: {duration}")
+        self.count += 1
+        return True
+
+    def touch_down(
+        self,
+        contact: int,
+        x: int,
+        y: int,
+        pressure: int,
+    ) -> bool:
+        print(
+            f"on MyController.touch_down, contact: {contact}, x: {x}, y: {y}, pressure: {pressure}"
+        )
+        self.count += 1
+        return True
+
+    def touch_move(
+        self,
+        contact: int,
+        x: int,
+        y: int,
+        pressure: int,
+    ) -> bool:
+        print(
+            f"on MyController.touch_move, contact: {contact}, x: {x}, y: {y}, pressure: {pressure}"
+        )
+        self.count += 1
+        return True
+
+    def touch_up(self, contact: int) -> bool:
+        print(f"on MyController.touch_up, contact: {contact}")
+        self.count += 1
+        return True
+
+    def press_key(self, keycode: int) -> bool:
+        print(f"on MyController.press_key, keycode: {keycode}")
+        self.count += 1
+        return True
+
+    def input_text(self, text: str) -> bool:
+        print(f"on MyController.input_text, text: {text}")
+        self.count += 1
+        return True
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    version = Library.open(install_dir / "bin")
+    print(f"MaaFw Version: {version}")
+
+    Toolkit.init_option(install_dir / "bin")
+
+    api_test()
+    custom_ctrl_test()

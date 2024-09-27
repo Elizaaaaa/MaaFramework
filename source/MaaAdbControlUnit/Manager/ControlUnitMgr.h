@@ -9,7 +9,6 @@
 #include "General/DeviceInfo.h"
 #include "General/DeviceList.h"
 #include "Utils/Dispatcher.hpp"
-#include "Utils/MessageNotifier.hpp"
 
 MAA_CTRL_UNIT_NS_BEGIN
 
@@ -21,8 +20,8 @@ public:
     ControlUnitMgr(
         std::filesystem::path adb_path,
         std::string adb_serial,
-        MaaControllerCallback callback,
-        MaaCallbackTransparentArg callback_arg);
+        std::shared_ptr<ScreencapBase> screencap_unit,
+        std::shared_ptr<InputBase> touch_unit);
     virtual ~ControlUnitMgr() override = default;
 
 public: // from ControlUnitAPI
@@ -51,29 +50,20 @@ public:
     bool parse(const json::value& config);
     void set_replacement(const UnitBase::Replacement& replacement);
 
-    void init(
-        std::shared_ptr<TouchInputBase> touch,
-        std::shared_ptr<KeyInputBase> key,
-        std::shared_ptr<ScreencapBase> screencap);
-
 private:
     bool _screencap(/*out*/ cv::Mat& image);
-    void
-        on_image_resolution_changed(const std::pair<int, int>& pre, const std::pair<int, int>& cur);
+    void on_image_resolution_changed(const std::pair<int, int>& pre, const std::pair<int, int>& cur);
 
 private:
     std::filesystem::path adb_path_;
     std::string adb_serial_;
-
-    MessageNotifier<MaaControllerCallback> notifier;
 
     DeviceList device_list_;
     Connection connection_;
     DeviceInfo device_info_;
     Activity activity_;
 
-    std::shared_ptr<TouchInputBase> touch_input_ = nullptr;
-    std::shared_ptr<KeyInputBase> key_input_ = nullptr;
+    std::shared_ptr<InputBase> input_ = nullptr;
     std::shared_ptr<ScreencapBase> screencap_ = nullptr;
 
     bool screencap_available_ = false;

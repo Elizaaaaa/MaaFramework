@@ -11,12 +11,20 @@ MAA_CTRL_UNIT_NS_BEGIN
 ControlUnitMgr::ControlUnitMgr(
     std::filesystem::path adb_path,
     std::string adb_serial,
-    MaaControllerCallback callback,
-    MaaCallbackTransparentArg callback_arg)
+    std::shared_ptr<ScreencapBase> screencap_unit,
+    std::shared_ptr<InputBase> touch_unit)
     : adb_path_(std::move(adb_path))
     , adb_serial_(std::move(adb_serial))
-    , notifier(callback, callback_arg)
+    , connection_(adb_path_, adb_serial_)
+    , input_(std::move(touch_unit))
+    , screencap_(std::move(screencap_unit))
 {
+    register_observer(input_); // for on_image_resolution_changed
+
+    set_replacement({
+        { "{ADB}", path_to_utf8_string(adb_path_) },
+        { "{ADB_SERIAL}", adb_serial_ },
+    });
 }
 
 bool ControlUnitMgr::find_device(std::vector<std::string>& devices)
@@ -33,72 +41,29 @@ bool ControlUnitMgr::find_device(std::vector<std::string>& devices)
 
 bool ControlUnitMgr::connect()
 {
-    json::value details = {
-        { "adb", path_to_utf8_string(adb_path_) },
-        { "address", adb_serial_ },
-    };
-
-    bool connected = connection_.connect();
-    bool is_remote = adb_serial_.find(':') != std::string::npos;
-    if (!connected && is_remote) {
-        notifier.notify(
-            MaaMsg_Controller_ConnectFailed,
-            details | json::object { { "why", "ConnectFailed" } });
+    if (!connection_.connect()) {
+        LogError << "failed to connect" << VAR(adb_path_) << VAR(adb_serial_);
         return false;
     }
-
-    auto uuid_opt = device_info_.request_uuid();
-    if (!uuid_opt) {
-        notifier.notify(MaaMsg_Controller_UUIDGetFailed, details);
-        notifier.notify(
-            MaaMsg_Controller_ConnectFailed,
-            details | json::object { { "why", "UUIDGetFailed" } });
-        return false;
-    }
-    const auto& uuid = uuid_opt.value();
-    details |= { { "uuid", uuid } };
-
-    notifier.notify(MaaMsg_Controller_UUIDGot, details | json::object { { "uuid", uuid } });
-
-    notifier.notify(MaaMsg_Controller_ConnectSuccess, details);
 
     if (screencap_) {
         if (!screencap_->init()) {
             LogError << "failed to init screencap";
-            notifier.notify(MaaMsg_Controller_ScreencapInitFailed, details);
             return false;
         }
-        notifier.notify(MaaMsg_Controller_ScreencapInited, details);
     }
     else {
         LogWarn << "screencap_ is null";
-        notifier.notify(MaaMsg_Controller_ScreencapInitFailed, details);
     }
 
-    if (touch_input_) {
-        if (!touch_input_->init()) {
+    if (input_) {
+        if (!input_->init()) {
             LogError << "failed to init touch_input";
-            notifier.notify(MaaMsg_Controller_TouchInputInitFailed, details);
             return false;
         }
-        notifier.notify(MaaMsg_Controller_TouchInputInited, details);
     }
     else {
-        LogWarn << "touch_input_ is null";
-        notifier.notify(MaaMsg_Controller_TouchInputInitFailed, details);
-    }
-
-    if (key_input_) {
-        if (!key_input_->init()) {
-            LogError << "failed to init key_input";
-            notifier.notify(MaaMsg_Controller_KeyInputInitFailed, details);
-            return false;
-        }
-        notifier.notify(MaaMsg_Controller_KeyInputInited, details);
-    }
-    else {
-        LogWarn << "key_input_ is null";
-        notifier.notify(MaaMsg_Controller_KeyInputInitFailed, details);
+        LogWarn << "input_ is null";
     }
 
     return true;
@@ -145,6 +110,7 @@ bool ControlUnitMgr::screencap(cv::Mat& image)
         }
 
         LogWarn << "re-connect";
+        connection_.kill_server();
         connect();
     }
 
@@ -153,72 +119,72 @@ bool ControlUnitMgr::screencap(cv::Mat& image)
 
 bool ControlUnitMgr::click(int x, int y)
 {
-    if (!touch_input_) {
-        LogError << "touch_input_ is null";
+    if (!input_) {
+        LogError << "input_ is null";
         return false;
     }
 
-    return touch_input_->click(x, y);
+    return input_->click(x, y);
 }
 
 bool ControlUnitMgr::swipe(int x1, int y1, int x2, int y2, int duration)
 {
-    if (!touch_input_) {
-        LogError << "touch_input_ is null";
+    if (!input_) {
+        LogError << "input_ is null";
         return false;
     }
 
-    return touch_input_->swipe(x1, y1, x2, y2, duration);
+    return input_->swipe(x1, y1, x2, y2, duration);
 }
 
 bool ControlUnitMgr::touch_down(int contact, int x, int y, int pressure)
 {
-    if (!touch_input_) {
-        LogError << "touch_input_ is null";
+    if (!input_) {
+        LogError << "input_ is null";
         return false;
     }
 
-    return touch_input_->touch_down(contact, x, y, pressure);
+    return input_->touch_down(contact, x, y, pressure);
 }
 
 bool ControlUnitMgr::touch_move(int contact, int x, int y, int pressure)
 {
-    if (!touch_input_) {
-        LogError << "touch_input_ is null";
+    if (!input_) {
+        LogError << "input_ is null";
         return false;
     }
 
-    return touch_input_->touch_move(contact, x, y, pressure);
+    return input_->touch_move(contact, x, y, pressure);
 }
 
 bool ControlUnitMgr::touch_up(int contact)
 {
-    if (!touch_input_) {
-        LogError << "touch_input_ is null";
+    if (!input_) {
+        LogError << "input_ is null";
         return false;
     }
 
-    return touch_input_->touch_up(contact);
+    return input_->touch_up(contact);
 }
 
 bool ControlUnitMgr::press_key(int key)
 {
-    if (!key_input_) {
-        LogError << "key_input_ is null";
+    if (!input_) {
+        LogError << "input_ is null";
         return false;
     }
 
-    return key_input_->press_key(key);
+    return input_->press_key(key);
 }
 
 bool ControlUnitMgr::input_text(const std::string& text)
 {
-    if (!key_input_) {
-        LogError << "key_input_ is null";
+    if (!input_) {
+        LogError << "input_ is null";
         return false;
     }
 
-    return key_input_->input_text(text);
+    return input_->input_text(text);
 }
 
 bool ControlUnitMgr::parse(const json::value& config)
@@ -234,29 +200,11 @@ bool ControlUnitMgr::parse(const json::value& config)
         ret &= screencap_->parse(config);
     }
 
-    if (touch_input_) {
-        ret &= touch_input_->parse(config);
-    }
-
-    if (key_input_) {
-        ret &= key_input_->parse(config);
+    if (input_) {
+        ret &= input_->parse(config);
     }
 
     return ret;
-}
-
-void ControlUnitMgr::init(
-    std::shared_ptr<TouchInputBase> touch,
-    std::shared_ptr<KeyInputBase> key,
-    std::shared_ptr<ScreencapBase> screencap)
-{
-    unregister_observer(touch_input_);
-
-    touch_input_ = std::move(touch);
-    key_input_ = std::move(key);
-    screencap_ = std::move(screencap);
-
-    register_observer(touch_input_);
 }
 
 void ControlUnitMgr::set_replacement(const UnitBase::Replacement& replacement)
@@ -266,11 +214,8 @@ void ControlUnitMgr::set_replacement(const UnitBase::Replacement& replacement)
     device_info_.set_replacement(replacement);
     activity_.set_replacement(replacement);
 
-    if (touch_input_) {
-        touch_input_->set_replacement(replacement);
-    }
-    if (key_input_) {
-        key_input_->set_replacement(replacement);
+    if (input_) {
+        input_->set_replacement(replacement);
     }
     if (screencap_) {
         screencap_->set_replacement(replacement);
@@ -300,8 +245,7 @@ bool ControlUnitMgr::_screencap(cv::Mat& image)
         height = image.rows;
     }
     else if (width != image.cols || height != image.rows) {
-        LogInfo << "Image size changed" << VAR(width) << VAR(height) << VAR(image.cols)
-                << VAR(image.rows);
+        LogInfo << "Image size changed" << VAR(width) << VAR(height) << VAR(image.cols) << VAR(image.rows);
         auto pre = image_resolution_;
 
         width = image.cols;
@@ -313,13 +257,11 @@ bool ControlUnitMgr::_screencap(cv::Mat& image)
     return true;
 }
 
-void ControlUnitMgr::on_image_resolution_changed(
-    const std::pair<int, int>& pre,
-    const std::pair<int, int>& cur)
+void ControlUnitMgr::on_image_resolution_changed(const std::pair<int, int>& pre, const std::pair<int, int>& cur)
 {
     LogFunc;
 
-    dispatch([&](const std::shared_ptr<ControlUnitSink>& sink) {
+    Dispatcher<ControlUnitSink>::dispatch([&](const std::shared_ptr<ControlUnitSink>& sink) {
         if (!sink) {
             return;
         }

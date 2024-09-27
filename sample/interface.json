@@ -1,4 +1,6 @@
 {
+    "version": "1.0",
+    "message": "Welecome to MaaFramework!",
     "controller": [
         {
             "name": "安卓端",
@@ -8,9 +10,8 @@
             "name": "桌面端",
             "type": "Win32",
             "win32": {
-                "method": "Search",
-                "class_name": ".*",
-                "window_name": "Visual Studio"
+                "class_regex": ".*",
+                "window_regex": "Visual Studio"
             }
         }
     ],
@@ -54,7 +55,7 @@
                 "复现次数",
                 "刷完全部体力"
             ],
-            "param": {
+            "pipeline_override": {
                 "EnterTheShow": {
                     "next": "ANightmareAtGreenLake"
                 },
@@ -71,27 +72,12 @@
             "entry": "Awards"
         }
     ],
-    "recognizer": {
-        "StageDropsRecognizer": {
-            "exec_path": "Python",
-            "exec_param": [
-                "{PROJECT_DIR}/exec_agent/StageDropsRecognizer/__main__.py",
-                "my_custom_args"
-            ]
-        }
-    },
-    "action": {
-        "StageDropsUploador": {
-            "exec_path": "{PROJECT_DIR}/exec_agent/StageDropsUploador.exe",
-            "exec_param": []
-        }
-    },
     "option": {
         "作战关卡": {
             "cases": [
                 {
                     "name": "3-9 厄险（百灵百验鸟）",
-                    "param": {
+                    "pipeline_override": {
                         "EnterTheShow": {
                             "next": "MainChapter_3"
                         },
@@ -105,7 +91,7 @@
                 },
                 {
                     "name": "4-20 厄险（双头形骨架）",
-                    "param": {
+                    "pipeline_override": {
                         "EnterTheShow": {
                             "next": "MainChapter_4"
                         },
@@ -123,7 +109,7 @@
             "cases": [
                 {
                     "name": "x1",
-                    "param": {
+                    "pipeline_override": {
                         "SetReplaysTimes": {
                             "expected": "1"
                         }
@@ -131,7 +117,7 @@
                 },
                 {
                     "name": "x2",
-                    "param": {
+                    "pipeline_override": {
                         "SetReplaysTimes": {
                             "expected": "2"
                         }
@@ -139,7 +125,7 @@
                 },
                 {
                     "name": "x3",
-                    "param": {
+                    "pipeline_override": {
                         "SetReplaysTimes": {
                             "expected": "3"
                         }
@@ -147,7 +133,7 @@
                 },
                 {
                     "name": "x4",
-                    "param": {
+                    "pipeline_override": {
                         "SetReplaysTimes": {
                             "expected": "4"
                         }
@@ -159,7 +145,7 @@
             "cases": [
                 {
                     "name": "Yes",
-                    "param": {
+                    "pipeline_override": {
                         "AllIn": {
                             "enabled": true
                         }
@@ -167,7 +153,7 @@
                 },
                 {
                     "name": "No",
-                    "param": {
+                    "pipeline_override": {
                         "AllIn": {
                             "enabled": false
                         }

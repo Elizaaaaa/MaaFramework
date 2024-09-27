@@ -1,7 +1,7 @@
 #include "SeizeInput.h"
 
-#include "ControlUnit/MicroControl.hpp"
 #include "Utils/Logger.h"
+#include "Utils/MicroControl.hpp"
 #include "Utils/Platform.h"
 #include "Utils/SafeWindows.hpp"
 
@@ -116,7 +116,29 @@ bool SeizeInput::touch_down(int contact, int x, int y, int pressure)
     INPUT input = {};
 
     input.type = INPUT_MOUSE;
-    input.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
+
+    switch (contact) {
+    case 0:
+        input.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
+        break;
+    case 1:
+        input.mi.dwFlags = MOUSEEVENTF_RIGHTDOWN;
+        break;
+    case 2:
+        input.mi.dwFlags = MOUSEEVENTF_MIDDLEDOWN;
+        break;
+    case 3:
+        input.mi.dwFlags = MOUSEEVENTF_XDOWN;
+        input.mi.mouseData = XBUTTON1;
+        break;
+    case 4:
+        input.mi.dwFlags = MOUSEEVENTF_XDOWN;
+        input.mi.mouseData = XBUTTON2;
+        break;
+    default:
+        LogError << "contact out of range" << VAR(contact);
+        return false;
+    }
 
     SendInput(1, &input, sizeof(INPUT));
 
@@ -149,8 +171,6 @@ bool SeizeInput::touch_up(int contact)
 {
     LogInfo << VAR(contact);
 
-    std::ignore = contact;
-
     if (!hwnd_) {
         LogError << "hwnd_ is nullptr";
         return false;
@@ -161,7 +181,28 @@ bool SeizeInput::touch_up(int contact)
     INPUT input = {};
 
     input.type = INPUT_MOUSE;
-    input.mi.dwFlags = MOUSEEVENTF_LEFTUP;
+    switch (contact) {
+    case 0:
+        input.mi.dwFlags = MOUSEEVENTF_LEFTUP;
+        break;
+    case 1:
+        input.mi.dwFlags = MOUSEEVENTF_RIGHTUP;
+        break;
+    case 2:
+        input.mi.dwFlags = MOUSEEVENTF_MIDDLEUP;
+        break;
+    case 3:
+        input.mi.dwFlags = MOUSEEVENTF_XUP;
+        input.mi.mouseData = XBUTTON1;
+        break;
+    case 4:
+        input.mi.dwFlags = MOUSEEVENTF_XUP;
+        input.mi.mouseData = XBUTTON2;
+        break;
+    default:
+        LogError << "contact out of range" << VAR(contact);
+        return false;
+    }
 
     SendInput(1, &input, sizeof(INPUT));
 
