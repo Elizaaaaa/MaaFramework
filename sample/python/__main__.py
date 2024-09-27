@@ -1,9 +1,11 @@
 from typing import Tuple
+import time
 
 # python -m pip install maafw
 from maa.define import RectType
 from maa.resource import Resource
-from maa.controller import AdbController
+from maa.define import MaaWin32ControllerTypeEnum
+from maa.controller import Win32Controller
 from maa.instance import Instance
 from maa.toolkit import Toolkit
 
@@ -40,8 +42,7 @@ async def main():
         print("Failed to init MAA.")
         exit()
 
-    maa_inst.register_recognizer("MyRec", my_rec)
-    maa_inst.register_action("MyAct", my_act)
+    maa_inst.register_action("RepeatPickUpAll", pickUpAll)
 
     await maa_inst.run_task("StartUpAndClickButton")
 
@@ -60,9 +61,21 @@ class MyAction(CustomAction):
     def stop(self) -> None:
         pass
 
+class RepeatPickupAll(CustomAction):
+    def run(self, context, task_name, custom_param, box, rec_detail) -> bool:
+        print(
+            f"on RepeatPickupAll.run, task_name: {task_name}, custom_param: {custom_param}, box: {box}, rec_detail: {rec_detail}"
+        )
+        for _ in range(5):
+            context.press_key(90) #Press Z for 5 times
+            time.sleep(0.2)
 
-my_rec = MyRecognizer()
-my_act = MyAction()
+        return True
+
+    def stop(self) -> None:
+        pass
+
+pickUpAll = RepeatPickupAll();
 
 
 if __name__ == "__main__":

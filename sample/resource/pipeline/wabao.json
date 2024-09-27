@@ -1,0 +1,127 @@
+{
+    "StartWabao": {
+        "next": [
+            "FindMiniMap",
+            "ClickMiniMap"
+        ]
+    },
+    "FindMiniMap": {
+        "recognition": "TemplateMatch",
+        "template": "minimap.png"
+    },
+    "ClickFoundMiniMap": {
+        "action": "Click",
+        "target": "FindMiniMap",
+        "next": [
+            "FindBaoPos"
+        ]
+    },
+    "ClickMiniMap": {
+        "action": "Click",
+        "target": [
+            1220,
+            65,
+            50,
+            50
+        ],
+        "next": [
+            "FindBaoPos"
+        ]
+    },
+    "ClickIslandCorner": {
+        "action": "Click",
+        "target": [
+            922,
+            608,
+            10,
+            10
+        ]
+    },
+    "FindBaoPos": {
+        "recognition": "TemplateMatch",
+        "template": "baopos.png",
+        "next": [
+            "ClickBaoPos"
+        ]
+    },
+    "ClickBaoPos": {
+        "action": "Click",
+        "target": "FindBaoPos",
+        "next": [
+            "FindZidongxunlu",
+            "FindCangbaodian"
+        ]
+    },
+    "FindCangbaodian": {
+        "recognition": "OCR",
+        "expected": "藏宝点",
+        "next": [
+            "ClickCangbaodian"
+        ]
+    },
+    "ClickCangbaodian": {
+        "action": "Click",
+        "target": "FindCangbaodian",
+        "next": [
+            "FindTargetPos"
+        ]
+    },
+    "FindTargetPos": {
+        "recognition": "TemplateMatch",
+        "template": "target.png"
+    },
+    "ClickTargetPos": {
+        "action": "Click",
+        "target": "FindTargetPos",
+        "next": [
+            "FindZidongxunlu"
+        ]
+    },
+    "FindZidongxunlu": {
+        "recognition": "OCR",
+        "expected": "自动寻路",
+        "next": [
+            "ClickZidongxunlu"
+        ]
+    },
+    "ClickZidongxunlu": {
+        "action": "Click",
+        "target": "FindZidongxunlu",
+        "next": [
+            "FindFaxianPos",
+            "FindFaxianText"
+        ]
+    },
+    "FindFaxianPos": {
+        "recognition": "TemplateMatch",
+        "template": "faxian.png",
+        "next": [
+            "ClickFaxianPos"
+        ]
+    },
+    "FindFaxianText": {
+        "recognition": "OCR",
+        "expected": "发现",
+        "next": [
+            "ClickFaxianText"
+        ]
+    },
+    "ClickFaxianPos": {
+        "action": "Click",
+        "target": "FindFaxianPos",
+        "next": [
+            "KeyPickupAll"
+        ]
+    },
+    "ClickFaxianText": {
+        "action": "Click",
+        "target": "FindFaxianText",
+        "next": [
+            "KeyPickupAll"
+        ]
+    },
+    "KeyPickupAll": {
+        "action": "Key",
+        "key": 90
+    }
+}
