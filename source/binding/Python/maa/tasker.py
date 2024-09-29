@@ -54,11 +54,14 @@ class Tasker:
         self._resource_holder = resource
         self._controller_holder = controller
 
-        return bool(
-            Library.framework.MaaTaskerBindResource(self._handle, resource._handle)
-        ) and bool(
-            Library.framework.MaaTaskerBindController(self._handle, controller._handle)
-        )
+        bindResource = Library.framework.MaaTaskerBindResource(self._handle, resource._handle)
+        bindController = Library.framework.MaaTaskerBindController(self._handle, controller._handle)
+        if bindResource is False:
+            raise RuntimeError("Tasker resource bind failed.")
+        if bindController is False:
+            raise RuntimeError("Tasker controller bind failed.")
+
+        return bindResource and bindController
 
     @property
     def resource(self) -> Resource:

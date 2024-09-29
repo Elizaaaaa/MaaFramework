@@ -1,17 +1,13 @@
 {
     "StartWabao": {
         "next": [
-            "FindMiniMap",
-            "ClickMiniMap"
+            "FindMiniMap"
         ]
     },
     "FindMiniMap": {
         "recognition": "TemplateMatch",
-        "template": "minimap.png"
-    },
-    "ClickFoundMiniMap": {
+        "template": "minimap.png",
         "action": "Click",
-        "target": "FindMiniMap",
         "next": [
             "FindBaoPos"
         ]
@@ -19,8 +15,8 @@
     "ClickMiniMap": {
         "action": "Click",
         "target": [
-            1220,
-            65,
+            1105,
+            75,
             50,
             50
         ],
@@ -123,5 +119,9 @@
     "KeyPickupAll": {
         "action": "Key",
         "key": 90
+    },
+    "KeyR": {
+        "action": "Key",
+        "key": 82
     }
 }
