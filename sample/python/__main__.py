@@ -6,6 +6,7 @@ from maa.resource import Resource
 from maa.controller import Win32Controller
 from maa.tasker import Tasker
 from maa.toolkit import Toolkit
+from maa.context import Context
 from maa.define import MaaWin32ScreencapMethodEnum, MaaWin32InputMethodEnum
 
 from maa.custom_recognition import CustomRecognition
@@ -30,19 +31,35 @@ def main():
 
     tasker = Tasker()
     tasker.bind(resource, controller)
+    time.sleep(1)
     if not tasker.inited:
         print("Failed to init MAA.")
         exit(1)
 
-    tasker.resource.register_custom_action("PressR", PressR())
+    resource.register_custom_action("PressR", PressR())
+    resource.register_custom_action("PressZ", PressZ())
 
-    controller.set_screenshot_target_long_side(1920)
-    controller.set_screenshot_target_short_side(1080)
+    controller.set_screenshot_target_long_side(1080)
+    controller.set_screenshot_target_short_side(720)
     controller.post_screencap().wait()
     image = controller.cached_image
     save_to_file(image, user_path+"/savedImage.png")
 
-    task_detail = tasker.post_pipeline("StartWabao").wait().get()
+    ppover = {
+        "Entry": {"next": "PressR"},
+        "PressR": {
+            "action": "Custom",
+            "custom_action": "PressR",
+            "custom_action_param": "RRRRRRRRRRRRRRRRR"
+        },
+        "PressZ": {
+            "action": "Custom",
+            "custom_action": "PressZ",
+            "custom_action_param": "ZZZZZZZZZZZZZZZZZZZZ"
+        }
+    }
+
+    task_detail = tasker.post_pipeline("Entry", ppover).wait().get()
     if task_detail:
         print(f"pipeline detail: {task_detail}")
     else:
@@ -60,36 +77,48 @@ def getWin32Controller():
                                    screencap_method=win32_screencap_type,
                                    input_method=win32_input_type)
 
-class RepeatPickupAll(CustomAction):
-    def run(self, context, task_name, custom_param, box, rec_detail) -> bool:
+class PressZ(CustomAction):
+    def run(
+        self,
+        context: Context,
+        argv: CustomAction.RunArg,
+    ) -> CustomAction.RunResult:
         print(
-            f"on RepeatPickupAll.run, task_name: {task_name}, custom_param: {custom_param}, box: {box}, rec_detail: {rec_detail}"
+            f"on PressZ.run, context: {context}, task_detail: {argv.task_detail}, action_name: {argv.custom_action_name}, action_param: {argv.custom_action_param}, box: {argv.box}, reco_detail: {argv.reco_detail}"
         )
+
+        controller = context.tasker.controller
         for _ in range(5):
-            context.press_key(90) #Press Z for 5 times
-            time.sleep(0.2)
+            controller.post_press_key(90).wait()
+            print("pressed R!")
+            time.sleep(1)
 
-        return True
+        global runned
+        runned = True
 
-    def stop(self) -> None:
-        pass
+        return CustomAction.RunResult(success=True)
 
 class PressR(CustomAction):
-    def run(self, context) -> bool:
+    def run(
+        self,
+        context: Context,
+        argv: CustomAction.RunArg,
+    ) -> CustomAction.RunResult:
         print(
-            f"on PressR.run"
+            f"on PressR.run, context: {context}, task_detail: {argv.task_detail}, action_name: {argv.custom_action_name}, action_param: {argv.custom_action_param}, box: {argv.box}, reco_detail: {argv.reco_detail}"
         )
+
+        controller = context.tasker.controller
         for _ in range(5):
-            context.press_key(82) #Press R for 5 times
-            time.sleep(0.2)
+            controller.post_press_key(82).wait()
+            print("pressed R!")
+            time.sleep(1)
 
-        return True
+        global runned
+        runned = True
 
-    def stop(self) -> None:
-        pass
+        return CustomAction.RunResult(success=True)
 
-pickUpAll = RepeatPickupAll()
-pressR = PressR()
 
 def save_to_file(image_array: np.ndarray, filename: str):
     if image_array.shape[-1] == 3:

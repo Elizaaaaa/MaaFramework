@@ -1,7 +1,7 @@
 {
     "StartWabao": {
         "next": [
-            "FindMiniMap"
+            "PressZ"
         ]
     },
     "FindMiniMap": {
@@ -120,8 +120,14 @@
         "action": "Key",
         "key": 90
     },
-    "KeyR": {
-        "action": "Key",
-        "key": 82
+    "PressR": {
+        "action": "Custom",
+        "custom_action": "PressR",
+        "custom_action_param": "RRRRRRRRRRRRRRRRR"
+    },
+    "PressZ": {
+        "action": "Custom",
+        "custom_action": "PressZ",
+        "custom_action_param": "ZZZZZZZZZZZZZZZZZZZZ"
     }
 }
