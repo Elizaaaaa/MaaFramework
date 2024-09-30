@@ -4,17 +4,17 @@ import numpy as np
 import json
 
 from maa.resource import Resource
-from maa.controller import Win32Controller
+from maa.controller import AdbController
 from maa.tasker import Tasker
 from maa.toolkit import Toolkit
 from maa.context import Context
-from maa.define import MaaWin32ScreencapMethodEnum, MaaWin32InputMethodEnum
+from maa.define import MaaAdbScreencapMethodEnum
 
 from maa.custom_recognition import CustomRecognition
 from maa.custom_action import CustomAction
 
-win32_screencap_type = MaaWin32ScreencapMethodEnum.FramePool
-win32_input_type = MaaWin32InputMethodEnum.Seize
+
+adb_screencap_type = MaaAdbScreencapMethodEnum.Encode
 
 
 def main():
@@ -25,10 +25,15 @@ def main():
     res_job = resource.post_path("D:/Projects/MaaFramework/sample/resource")
     res_job.wait()
 
-    controller = getWin32Controller()
+    controller = getAdbController()
     if controller:
         if controller.post_connection().failed():
             print(f"Failed to connect device.")
+            exit(1)
+
+    controller.set_screenshot_target_long_side(1920)
+    controller.set_screenshot_target_short_side(1080)
+    controller.post_screencap().wait()
 
     tasker = Tasker()
     tasker.bind(resource, controller)
@@ -41,9 +46,6 @@ def main():
     resource.register_custom_action("PressZ", PressZ())
     resource.register_custom_action("WaitAct", WaitAct())
 
-    #controller.set_screenshot_target_long_side(1080)
-    #controller.set_screenshot_target_short_side(720)
-    controller.post_screencap().wait()
     image = controller.cached_image
     save_to_file(image, user_path+"/savedImage.png")
 
@@ -53,17 +55,17 @@ def main():
     else:
         print("pipeline failed")
         raise RuntimeError("pipeline failed")
-    
-    #Toolkit.pi_run_cli("D:/Projects/MaaFramework/sample/resource", "D:/Projects/MaaFramework/sample/cache", False)
-
-def getWin32Controller():
-    window_list = Toolkit.find_desktop_windows()
-    for window in window_list:
-        # find J3 window
-        if "KGWin32App" in window.class_name:
-            return Win32Controller(window.hwnd,
-                                   screencap_method=win32_screencap_type,
-                                   input_method=win32_input_type)
+        
+def getAdbController():
+    device_list = Toolkit.find_adb_devices()
+    for device in device_list:
+        # jx3 adb port: 16384
+        if "16384" in device.address:
+            return AdbController(adb_path=device.adb_path,
+                                 address=device.address,
+                                 screencap_methods=device.screencap_methods,
+                                 input_methods=device.input_methods,
+                                 config=device.config)
 
 class PressZ(CustomAction):
     def run(
@@ -77,7 +79,7 @@ class PressZ(CustomAction):
 
         controller = context.tasker.controller
         for _ in range(5):
-            controller.post_press_key(0x5A).wait()
+            controller.post_press_key(0x00000036).wait()
             print("pressed Z!")
             time.sleep(0.2)
 
@@ -93,12 +95,29 @@ class PressR(CustomAction):
         argv: CustomAction.RunArg,
     ) -> CustomAction.RunResult:
         print(
-            f"on PressR.run, context: {context}, task_detail: {argv.task_detail}, action_name: {argv.custom_action_name}, action_param: {argv.custom_action_param}, box: {argv.box}, reco_detail: {argv.reco_detail}"
+            f"on PressR.run, context: {context}, task_detail: {argv.task_detail}, action_name: {argv.custom_action_name}"
         )
 
         controller = context.tasker.controller
-        job = controller.post_press_key(0x52)
-        job.wait()
+        job = controller.post_press_key(0x0000002e).wait()
+
+        global runned
+        runned = True
+        
+        return CustomAction.RunResult(success=job.succeeded())
+    
+class PressT(CustomAction):
+    def run(
+        self,
+        context: Context,
+        argv: CustomAction.RunArg,
+    ) -> CustomAction.RunResult:
+        print(
+            f"on PressT.run, context: {context}, task_detail: {argv.task_detail}, action_name: {argv.custom_action_name}"
+        )
+
+        controller = context.tasker.controller
+        job = controller.post_press_key(0x00000030).wait()
 
         global runned
         runned = True

@@ -1,41 +1,58 @@
 {
     "StartWabao": {
         "next": [
-            "PressZ"
+            "ClickMiniMap",
+            "FindMiniMap"
         ]
     },
     "FindMiniMap": {
-        "recognition": "TemplateMatch",
-        "template": "minimap.png",
+        "recognition": "OCR",
+        "expected": "角色",
         "action": "Click",
+        "target_offset": [
+            50,
+            0,
+            0,
+            0
+        ],
         "next": [
-            "FindBaoPos"
+            "FindBaoPos",
+            "FindTargetPos"
         ]
     },
     "ClickMiniMap": {
         "action": "Click",
         "target": [
-            1105,
-            75,
-            50,
-            50
+            1600,
+            80,
+            80,
+            80
         ],
         "next": [
-            "FindBaoPos"
+            "FindBaoPos",
+            "FindTargetPos"
         ]
     },
     "ClickIslandCorner": {
+        "pre_delay": 100,
+        "recognition": "TemplateMatch",
+        "template": "islandcorner.png",
         "action": "Click",
-        "target": [
-            922,
-            608,
-            10,
-            10
+        "target_offset": [
+            40,
+            100,
+            -20,
+            -20
+        ],
+        "next": [
+            "FindZidongxunluCorner"
         ]
     },
     "FindBaoPos": {
         "recognition": "TemplateMatch",
         "template": "baopos.png",
+        "green_mask": true,
+        "method": 5,
         "next": [
             "ClickBaoPos"
         ]
@@ -64,7 +81,11 @@
     },
     "FindTargetPos": {
         "recognition": "TemplateMatch",
-        "template": "target.png"
+        "template": "target.png",
+        "green_mask": true,
+        "next": [
+            "ClickTargetPos"
+        ]
     },
     "ClickTargetPos": {
         "action": "Click",
@@ -80,12 +101,20 @@
             "ClickZidongxunlu"
         ]
     },
+    "FindZidongxunluCorner": {
+        "recognition": "OCR",
+        "expected": "自动寻路",
+        "action": "Click",
+        "next": [
+            "PressShangma",
+            "WaitToCorner"
+        ]
+    },
     "ClickZidongxunlu": {
         "action": "Click",
         "target": "FindZidongxunlu",
         "next": [
-            "FindFaxianPos",
-            "FindFaxianText"
+            "WaitToFaxian"
         ]
     },
     "FindFaxianPos": {
@@ -98,6 +127,7 @@
     "FindFaxianText": {
         "recognition": "OCR",
         "expected": "发现",
+        "pre_wait_freezes": 500,
         "next": [
             "ClickFaxianText"
         ]
@@ -117,17 +147,84 @@
         ]
     },
     "KeyPickupAll": {
-        "action": "Key",
-        "key": 90
+        "action": "Custom",
+        "custom_action": "PressZ",
+        "custom_action_param": "",
+        "next": [
+            "ClickMiniMapCorner"
+        ]
+    },
+    "ClickMiniMapCorner": {
+        "action": "Click",
+        "target": [
+            1600,
+            80,
+            80,
+            80
+        ],
+        "post_delay": 200,
+        "next": [
+            "ClickIslandCorner"
+        ]
+    },
+    "FindKaishiPos": {
+        "recognition": "OCR",
+        "expected": "开始",
+        "roi": [
+            230,
+            240,
+            190,
+            190
+        ],
+        "next": [
+            "ClickKaishiPos"
+        ]
+    },
+    "ClickKaishiPos": {
+        "action": "Click",
+        "target": "FindKaishiPos",
+        "next": [
+            "StartWabao"
+        ]
+    },
+    "WaitToFaxian": {
+        "action": "Custom",
+        "custom_action": "WaitAct",
+        "custom_action_param": {
+            "wait_time": 20
+        },
+        "next": [
+            "FindFaxianPos",
+            "FindFaxianText"
+        ]
+    },
+    "WaitToCorner": {
+        "action": "Custom",
+        "custom_action": "WaitAct",
+        "custom_action_param": {
+            "wait_time": 15
+        },
+        "next": [
+            "FindKaishiPos"
+        ]
     },
     "PressR": {
         "action": "Custom",
         "custom_action": "PressR",
-        "custom_action_param": "RRRRRRRRRRRRRRRRR"
+        "custom_action_param": ""
     },
     "PressZ": {
         "action": "Custom",
         "custom_action": "PressZ",
-        "custom_action_param": "ZZZZZZZZZZZZZZZZZZZZ"
+        "custom_action_param": ""
+    },
+    "PressShangma": {
+        "recognition": "TemplateMatch",
+        "template": "shangma.png",
+        "action": "Click",
+        "green_mask": true,
+        "next": [
+            "WaitToCorner"
+        ]
     }
 }
