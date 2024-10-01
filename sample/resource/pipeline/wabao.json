@@ -1,23 +1,9 @@
 {
     "StartWabao": {
+        "recognition": "Custom",
+        "custom_recognition": "RunKaishi",
         "next": [
-            "ClickMiniMap",
-            "FindMiniMap"
-        ]
-    },
-    "FindMiniMap": {
-        "recognition": "OCR",
-        "expected": "角色",
-        "action": "Click",
-        "target_offset": [
-            50,
-            0,
-            0,
-            0
-        ],
-        "next": [
-            "FindBaoPos",
-            "FindTargetPos"
+            "ClickMiniMap"
         ]
     },
     "ClickMiniMap": {
@@ -34,36 +20,23 @@
         ]
     },
     "ClickIslandCorner": {
-        "pre_delay": 100,
+        "pre_delay": 200,
         "recognition": "TemplateMatch",
         "template": "islandcorner.png",
         "action": "Click",
         "target_offset": [
-            40,
-            100,
-            -20,
-            -20
+            42,
+            95,
+            -25,
+            -25
         ],
         "next": [
             "FindZidongxunluCorner"
         ]
     },
     "FindBaoPos": {
-        "recognition": "TemplateMatch",
-        "template": "baopos.png",
-        "green_mask": true,
-        "method": 5,
-        "next": [
-            "ClickBaoPos"
-        ]
-    },
-    "ClickBaoPos": {
-        "action": "Click",
-        "target": "FindBaoPos",
-        "next": [
-            "FindZidongxunlu",
-            "FindCangbaodian"
-        ]
+        "recognition": "Custom",
+        "custom_recognition": "RunBaopos"
     },
     "FindCangbaodian": {
         "recognition": "OCR",
@@ -106,7 +79,6 @@
         "expected": "自动寻路",
         "action": "Click",
         "next": [
-            "PressShangma",
             "WaitToCorner"
         ]
     },
@@ -114,8 +86,12 @@
         "action": "Click",
         "target": "FindZidongxunlu",
         "next": [
-            "WaitToFaxian"
+            "WaitFaxian"
         ]
+    },
+    "WaitFaxian": {
+        "recognition": "Custom",
+        "custom_recognition": "RunFaxian"
     },
     "FindFaxianPos": {
         "recognition": "TemplateMatch",
@@ -167,45 +143,14 @@
             "ClickIslandCorner"
         ]
     },
-    "FindKaishiPos": {
-        "recognition": "OCR",
-        "expected": "开始",
-        "roi": [
-            230,
-            240,
-            190,
-            190
-        ],
-        "next": [
-            "ClickKaishiPos"
-        ]
-    },
-    "ClickKaishiPos": {
-        "action": "Click",
-        "target": "FindKaishiPos",
-        "next": [
-            "StartWabao"
-        ]
-    },
-    "WaitToFaxian": {
+    "WaitToCorner": {
         "action": "Custom",
         "custom_action": "WaitAct",
         "custom_action_param": {
             "wait_time": 20
         },
         "next": [
-            "FindFaxianPos",
-            "FindFaxianText"
-        ]
-    },
-    "WaitToCorner": {
-        "action": "Custom",
-        "custom_action": "WaitAct",
-        "custom_action_param": {
-            "wait_time": 15
-        },
-        "next": [
-            "FindKaishiPos"
+            "StartWabao"
         ]
     },
     "PressR": {
@@ -219,10 +164,16 @@
         "custom_action_param": ""
     },
     "PressShangma": {
-        "recognition": "TemplateMatch",
-        "template": "shangma.png",
+        "pre_delay": 200,
+        "recognition": "OCR",
+        "expected": "上马",
         "action": "Click",
-        "green_mask": true,
+        "target_offset": [
+            0,
+            -10,
+            0,
+            0
+        ],
         "next": [
             "WaitToCorner"
         ]

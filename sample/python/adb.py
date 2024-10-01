@@ -1,7 +1,4 @@
 import time
-from PIL import Image
-import numpy as np
-import json
 
 from maa.resource import Resource
 from maa.controller import AdbController
@@ -12,6 +9,8 @@ from maa.define import MaaAdbScreencapMethodEnum
 
 from maa.custom_recognition import CustomRecognition
 from maa.custom_action import CustomAction
+
+import wabaoAction as wabao
 
 
 adb_screencap_type = MaaAdbScreencapMethodEnum.Encode
@@ -42,17 +41,19 @@ def main():
         print("Failed to init MAA.")
         exit(1)
 
-    resource.register_custom_action("PressR", PressR())
-    resource.register_custom_action("PressZ", PressZ())
-    resource.register_custom_action("WaitAct", WaitAct())
+    resource.register_custom_action("PressZ", wabao.PressZ())
+    resource.register_custom_action("WaitAct", wabao.WaitAct())
+    resource.register_custom_recognition("RunKaishi", wabao.FindKaishi())
+    resource.register_custom_recognition("RunFaxian", wabao.FindFaxian())
+    resource.register_custom_recognition("RunBaopos", wabao.FindBaoPos())
 
     image = controller.cached_image
-    save_to_file(image, user_path+"/savedImage.png")
+    wabao.save_to_file(image, user_path+"/savedImage.png")
 
     task_detail = tasker.post_pipeline("StartWabao").wait().get()
-    if task_detail:
-        print(f"pipeline detail: {task_detail}")
-    else:
+    #if task_detail:
+        # print(f"pipeline detail: {task_detail}")
+    if task_detail is None:
         print("pipeline failed")
         raise RuntimeError("pipeline failed")
         
@@ -66,27 +67,6 @@ def getAdbController():
                                  screencap_methods=device.screencap_methods,
                                  input_methods=device.input_methods,
                                  config=device.config)
-
-class PressZ(CustomAction):
-    def run(
-        self,
-        context: Context,
-        argv: CustomAction.RunArg,
-    ) -> CustomAction.RunResult:
-        print(
-            f"on PressZ.run, context: {context}, task_detail: {argv.task_detail}, action_name: {argv.custom_action_name}, action_param: {argv.custom_action_param}, box: {argv.box}, reco_detail: {argv.reco_detail}"
-        )
-
-        controller = context.tasker.controller
-        for _ in range(5):
-            controller.post_press_key(0x00000036).wait()
-            print("pressed Z!")
-            time.sleep(0.2)
-
-        global runned
-        runned = True
-
-        return CustomAction.RunResult(success=True)
 
 class PressR(CustomAction):
     def run(
@@ -123,36 +103,6 @@ class PressT(CustomAction):
         runned = True
         
         return CustomAction.RunResult(success=job.succeeded())
-    
-class WaitAct(CustomAction):
-    def run(
-        self,
-        context: Context,
-        argv: CustomAction.RunArg,
-    ) -> CustomAction.RunResult:
-        print(
-            f"on PressR.run, context: {context}, task_detail: {argv.task_detail}, action_name: {argv.custom_action_name}, action_param: {argv.custom_action_param}"
-        )
-
-        action_params = json.loads(argv.custom_action_param)
-        sleepTime = float(action_params["wait_time"])
-        time.sleep(sleepTime)
-
-        global runned
-        runned = True
-        
-        return CustomAction.RunResult(success=True)
-
-
-def save_to_file(image_array: np.ndarray, filename: str):
-    if image_array.shape[-1] == 3:
-        image_array = image_array[..., ::-1]
-    # Convert the NumPy array to a Pillow image
-    image = Image.fromarray(image_array)
-    
-    # Save the image to the specified file
-    image.save(filename)
-    print(f"Image saved to {filename}")
 
 
 if __name__ == "__main__":
