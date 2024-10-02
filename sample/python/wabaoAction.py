@@ -74,7 +74,7 @@ class FindBaoPos(CustomRecognition):
                 "recognition": "FeatureMatch",
                 "template": "baopos.png",
                 "green_mask": True,
-                "roi": [1220, 800, 500, 500]
+                "roi": [1220, 800, 300, 300]
             },
             "ColorMatch": {
                 "recognition": "ColorMatch",
@@ -90,6 +90,7 @@ class FindBaoPos(CustomRecognition):
             }
         }
         box = (1300, 880, 10, 10)
+        result = None
         for _ in range(5):
             #尝试五遍
             time.sleep(0.2)
@@ -97,9 +98,13 @@ class FindBaoPos(CustomRecognition):
             image = controller.cached_image
             result = context.run_recognition("FindBaoPosAct", image, ppover)
             if result:
-                break
+                if result.box.w < 100 and result.box.h < 100:
+                    break
+                else:
+                    result = None # unqualified
         
         if result:
+            print(result)
             box = result.box
             print(f"FindBaoPos - click {box}")
             controller.post_click(int(box.x+5), int(box.y+5)).wait()
@@ -110,8 +115,8 @@ class FindBaoPos(CustomRecognition):
             time.sleep(1)
             controller.post_screencap().wait()
             image = controller.cached_image
-            result = context.run_recognition("FindCangbaodian", image, ppover)
-            if result:
+            cangbaoResult = context.run_recognition("FindCangbaodian", image, ppover)
+            if cangbaoResult:
                 print(f"成功点击到藏宝点")
                 context.override_next(argv.current_task_name, ["FindZidongxunlu"])
             else:
