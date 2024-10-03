@@ -1,4 +1,5 @@
 import time
+from pathlib import Path
 
 from maa.resource import Resource
 from maa.controller import AdbController
@@ -17,11 +18,11 @@ adb_screencap_type = MaaAdbScreencapMethodEnum.Encode
 
 
 def main():
-    user_path = "D:/Projects/MaaFramework/sample"
+    user_path = Path(__file__).parent.parent
     Toolkit.init_option(user_path)
 
     resource = Resource()
-    res_job = resource.post_path("D:/Projects/MaaFramework/sample/resource")
+    res_job = resource.post_path(user_path/"resource")
     res_job.wait()
 
     controller = getAdbController()
@@ -47,12 +48,10 @@ def main():
     resource.register_custom_recognition("RunFaxian", wabao.FindFaxian())
     resource.register_custom_recognition("RunBaopos", wabao.FindBaoPos())
 
-    image = controller.cached_image
-    wabao.save_to_file(image, user_path+"/savedImage.png")
+    #image = controller.cached_image
+   # wabao.save_to_file(image, user_path+"/savedImage.png")
 
     task_detail = tasker.post_pipeline("StartWabao").wait().get()
-    #if task_detail:
-        # print(f"pipeline detail: {task_detail}")
     if task_detail is None:
         print("pipeline failed")
         raise RuntimeError("pipeline failed")
@@ -67,42 +66,6 @@ def getAdbController():
                                  screencap_methods=device.screencap_methods,
                                  input_methods=device.input_methods,
                                  config=device.config)
-
-class PressR(CustomAction):
-    def run(
-        self,
-        context: Context,
-        argv: CustomAction.RunArg,
-    ) -> CustomAction.RunResult:
-        print(
-            f"on PressR.run, context: {context}, task_detail: {argv.task_detail}, action_name: {argv.custom_action_name}"
-        )
-
-        controller = context.tasker.controller
-        job = controller.post_press_key(0x0000002e).wait()
-
-        global runned
-        runned = True
-        
-        return CustomAction.RunResult(success=job.succeeded())
-    
-class PressT(CustomAction):
-    def run(
-        self,
-        context: Context,
-        argv: CustomAction.RunArg,
-    ) -> CustomAction.RunResult:
-        print(
-            f"on PressT.run, context: {context}, task_detail: {argv.task_detail}, action_name: {argv.custom_action_name}"
-        )
-
-        controller = context.tasker.controller
-        job = controller.post_press_key(0x00000030).wait()
-
-        global runned
-        runned = True
-        
-        return CustomAction.RunResult(success=job.succeeded())
 
 
 if __name__ == "__main__":
