@@ -20,7 +20,7 @@ adb_screencap_type = MaaAdbScreencapMethodEnum.Encode
 def main():
     user_path = Path(__file__).parent.parent
     Toolkit.init_option(user_path)
-
+    
     resource = Resource()
     res_job = resource.post_path(user_path/"resource")
     res_job.wait()

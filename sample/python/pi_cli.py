@@ -1,35 +1,20 @@
+from pathlib import Path
 from maa.toolkit import Toolkit
-from maa.context import Context
-from maa.custom_action import CustomAction
-from maa.custom_recognition import CustomRecognition
+
+import wabaoAction as wabao
 
 
 def main():
-    # 注册自定义动作
-    Toolkit.pi_register_custom_action("MyAct", MyAction())
+    user_path = Path(__file__).parent.parent
+
+    Toolkit.pi_register_custom_action("PressZ", wabao.PressZ())
+    Toolkit.pi_register_custom_action("WaitAct", wabao.WaitAct())
+    Toolkit.pi_register_custom_recognition("RunKaishi", wabao.FindKaishi())
+    Toolkit.pi_register_custom_recognition("RunFaxian", wabao.FindFaxian())
+    Toolkit.pi_register_custom_recognition("RunBaopos", wabao.FindBaoPos())
 
     # 启动 MaaPiCli
-    Toolkit.pi_run_cli("C:/MaaXXX/resource", "C:/MaaXXX/cache", False)
-
-
-class MyAction(CustomAction):
-    def run(
-        self, context: Context, argv: CustomAction.RunArg
-    ) -> CustomAction.RunResult:
-
-        print(f"on MyAction.run, context: {context}, argv: {argv}")
-
-        context.override_next(argv.current_task_name, ["TaskA", "TaskB"])
-
-        image = context.tasker.controller.cached_image
-        context.tasker.controller.post_click(100, 100).wait()
-
-        reco_detail = context.run_recognition(
-            "Cat", image, {"Cat": {"recognition": "OCR", "expected": "喵喵喵"}}
-        )
-        # if reco_detail xxxx
-
-        return CustomAction.RunResult(success=True)
+    Toolkit.pi_run_cli(user_path, user_path/"cache", False)
 
 
 if __name__ == "__main__":

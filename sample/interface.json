@@ -1,4 +1,6 @@
 {
+    "version": "1.0",
+    "message": "Welecome to MaaFramework!",
     "controller": [
         {
             "name": "安卓端",
@@ -7,7 +9,7 @@
     ],
     "resource": [
         {
-            "name": "无界端",
+            "name": "Official",
             "path": [
                 "{PROJECT_DIR}/resource"
             ]
