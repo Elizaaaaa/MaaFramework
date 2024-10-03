@@ -448,3 +448,4 @@ FodyWeavers.xsd
 export_targets.cmake
 maa_pi_config.json
 recording/*
+sample/savedImage.png
